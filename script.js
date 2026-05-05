@@ -148,19 +148,125 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
 });
 
-// ===== Contact Form =====
-contactForm.addEventListener('submit', (e) => {
+// ===== Contact Form with API Integration =====
+async function submitContactForm(e) {
     e.preventDefault();
+    
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const messageInput = document.getElementById('message');
+    const submitBtn = contactForm.querySelector('.btn');
+    
+    // Validation
+    if (!nameInput.value.trim() || !emailInput.value.trim() || !messageInput.value.trim()) {
+        showErrorMessage('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailInput.value)) {
+        showErrorMessage('Veuillez entrer une adresse email valide');
+        return;
+    }
+    
+    const formData = {
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        message: messageInput.value.trim(),
+        timestamp: new Date().toISOString()
+    };
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: formData.name,
+                body: formData.message,
+                userId: 1
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Afficher le message de succès
+        showSuccessMessage('Message envoyé avec succès! Nous vous répondrons bientôt.');
+        contactForm.reset();
+        saveContactMessage(formData);
+        
+        // Console: Message de succès + données
+        console.log('✓ Informations envoyées avec succès');
+        console.log(formData);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi:', error);
+        showErrorMessage('Erreur lors de l\'envoi. Veuillez réessayer.');
+        
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer le Message';
+    }
+}
+
+function showSuccessMessage(message) {
+    successMessage.textContent = message;
     successMessage.style.display = 'block';
-    contactForm.reset();
+    successMessage.style.background = 'rgba(34, 197, 94, 0.1)';
+    successMessage.style.color = '#22C55E';
+    successMessage.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+    
     setTimeout(() => {
         successMessage.style.display = 'none';
     }, 5000);
-});
+}
+
+function showErrorMessage(message) {
+    successMessage.textContent = message;
+    successMessage.style.display = 'block';
+    successMessage.style.background = 'rgba(239, 68, 68, 0.1)';
+    successMessage.style.color = '#EF4444';
+    successMessage.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    
+    setTimeout(() => {
+        successMessage.style.display = 'none';
+    }, 5000);
+}
+
+function saveContactMessage(formData) {
+    try {
+        let messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+        messages.push(formData);
+        localStorage.setItem('contactMessages', JSON.stringify(messages));
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+    }
+}
+
+function getContactMessages() {
+    try {
+        return JSON.parse(localStorage.getItem('contactMessages')) || [];
+    } catch (error) {
+        console.error('Erreur lors de la récupération:', error);
+        return [];
+    }
+}
+
+contactForm.addEventListener('submit', submitContactForm);
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
     renderProjects();
+    console.log('✓ Portfolio chargé avec succès');
 });
 
 function navigateTo(sectionId) {
@@ -174,4 +280,4 @@ function navigateTo(sectionId) {
   }
 
   target?.scrollIntoView({ behavior: "smooth" });
-}
+}ََ
