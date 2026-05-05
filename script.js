@@ -271,13 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function navigateTo(sectionId) {
   sections.forEach(s => s.classList.remove('active'));
-
   navItems.forEach(n => n.classList.remove('active'));
 
   const target = document.getElementById(sectionId);
+
   if (target) {
     target.classList.add('active');
+    target.scrollIntoView({ behavior: "smooth" });
   }
-
-  target?.scrollIntoView({ behavior: "smooth" });
-}ََ
+}
